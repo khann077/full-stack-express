@@ -1,0 +1,210 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    link(rel='stylesheet', href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css', integrity='sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO', crossorigin='anonymous')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js', integrity='sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49', crossorigin='anonymous')
+    script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js', integrity='sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy', crossorigin='anonymous')
+    title My Schedule
+  body
+    nav.navbar.navbar-expanded.navbar-light.bg-light.mb-5
+      ul.nav.nav-pills
+        li.nav-item
+          a.nav-link(href='./welcome') Home
+        li.nav-item.active
+          a.nav-link.active(href='./schedule') Schedule
+        li.nav-item
+          a.nav-link(href='./addEvent')
+            | Add
+            | Event
+        li.nav-item
+          a.nav-link(href='./editEvent')
+            | Edit
+            | Event
+        li.nav-item
+          a.nav-link(href='/logout') Logout
+    .container.mb-5
+      .alert.alert-secondary(role='alert')
+        | Click on a day to see its events
+    .container.mb-3
+      ul#days.nav.nav-tabs.nav-fill
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Sunday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Monday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Tuesday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Wednesday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Thursday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Friday
+        li.nav-item
+          a.nav-link(onclick='formTable(this)') Saturday
+      br
+      br
+      .container
+        table#scheduleTable.table.table-striped
+          thead
+            tr
+              th(scope='col') Name
+              th(scope='col') Time
+              th(scope='col') Location
+              th(scope='col') Phone
+              th(scope='col') Extra Information
+          tbody#tableBody
+    script.
+      function handleExtra(info, url) {
+      const linkElem = document.createElement('a');
+      linkElem.setAttribute("href", url);
+      linkElem.text = info;
+      return linkElem;
+      }
+      function handleTime(start, end) {
+      const startDate = new Date(`2000-01-01T${start}`);
+      const endDate = new Date(`2000-01-01T${end}`);
+      const formatTime = (time) => {
+      let hours = time.getHours();
+      let minutes = time.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 12-hour clock format
+      minutes = minutes < 10 ? '0' + minutes : minutes; // Add leading zero for single digit minutes
+      return `${hours}:${minutes} ${ampm}`;
+      };
+      const formattedStart = formatTime(startDate);
+      const formattedEnd = formatTime(endDate);
+      return `${formattedStart} - ${formattedEnd}`;
+      }
+      function handleRowItem(item, table) {
+      const tblBody = document.getElementById("tableBody");
+      const day = item.event_day;
+      const name = item.event_event;
+      const start_time = item.event_start;
+      const end_time = item.event_end;
+      const time = handleTime(item.event_start, item.event_end);
+      const loc = item.event_location;
+      const phone = item.event_phone;
+      const event_info = item.event_info;
+      const event_url = item.event_url;
+      const extra = handleExtra(item.event_info, item.event_url);
+      const values = {id: item.event_id, name: name, day: day, start: start_time, end: end_time, loc: loc, phone: phone, info: event_info, url: event_url};
+      const values_str = JSON.stringify(values);
+      const row = document.createElement("tr");
+      row.setAttribute("event_id", item.event_id);
+      const cell1 = document.createElement("td");
+      cell1.innerText = name;
+      row.appendChild(cell1);
+      const cell2 = document.createElement("td");
+      cell2.innerText = time;
+      row.appendChild(cell2);
+      const cell3 = document.createElement("td");
+      cell3.innerText = loc;
+      row.appendChild(cell3);
+      const cell4 = document.createElement("td");
+      cell4.innerText = phone;
+      row.appendChild(cell4);
+      const cell5 = document.createElement("td");
+      cell5.appendChild(extra);
+      row.appendChild(cell5);
+      const cell6 = document.createElement("td");
+      const editBtn = document.createElement("button");
+      editBtn.innerText = "Edit";
+      editBtn.className = "btn btn-info btn-sm";
+      editBtn.style.display = 'none';
+      editBtn.onclick = function() {
+      let url = `/editEvent?id=${item.event_id}`;
+      //- let url = new URL('/editEvent');
+      //- url.searchParams.set('id', item.event_id);
+      fetch(url, {
+      method : "GET"
+      })
+      .then(response => response.text())
+      .then(html => { document.body.innerHTML = html;})
+      .catch(error => console.error('Error: ', error));
+      }
+      cell6.appendChild(editBtn);
+      const deleteBtn = document.createElement("button");
+      deleteBtn.innerText = "Delete";
+      deleteBtn.className = "btn btn-danger btn-sm";
+      deleteBtn.style.display = 'none';
+      deleteBtn.onclick = function () {
+      deleteRecord(this, item.event_id);
+      }
+      cell6.appendChild(deleteBtn);
+      row.appendChild(cell6);
+      row.onmouseover = function (){
+      handleRowHover(this);
+      };
+      row.onmouseout = function (){
+      handleRowHover(this);
+      };
+      tblBody.appendChild(row);
+      }
+      async function formTable(element) {
+      $('#days li a').removeClass("active");
+      $(element).addClass("active");
+      clearTable();
+      let day = $(element).text().toLowerCase();
+      let url = `/GETschedule?q=${day}`
+      // url.searchParams.set('q', day);
+      try{
+      fetch(url)
+      .then(response => response.json())
+      .then(data => {
+      let table = document.getElementById("scheduleTable");
+      let orderedData = data.sort((one, two) => {
+      const [oneHours, oneMinutes] = one.event_start.split(':').map(Number);
+      const [twoHours, twoMinutes] = two.event_start.split(':').map(Number);
+      if (oneHours !== twoHours) {
+      return oneHours - twoHours;
+      } else {
+      return oneMinutes - twoMinutes;
+      }
+      });
+      // console.log(orderedData);
+      orderedData.forEach(item => {
+      handleRowItem(item, table);
+      });
+      });
+      }
+      catch(err) {
+      console.error('Error fetching schedule data: ', err);
+      }
+      }
+      function clearTable() {
+      $('#scheduleTable tbody').empty();
+      }
+      function handleRowHover(row) {
+      $(row).mouseenter(function() {
+      $(this).find("button").show();
+      }).mouseleave(function() {
+      $(this).find("button").hide();
+      });
+      }
+      function deleteRecord(row, id) {
+      const confirmed = window.confirm("Are you sure you want to delete this event?");
+      if(confirmed) {
+      let url = `/DELETErecord?id=${id}`;
+      //- let url = new URL('/DELETErecord');
+      //- url.searchParams.set('id', id);
+      fetch(url, {
+      method: 'DELETE'
+      })
+      .then(response => {
+      if (response.ok) {
+      window.location.href = "/schedule";
+      console.log("Event Deleted Successfully");
+      return;
+      } else {
+      throw new Error('Failed to delete event.');
+      }
+      });
+      }
+      else {
+      console.log("Deletion Cancelled.")
+      }
+      }

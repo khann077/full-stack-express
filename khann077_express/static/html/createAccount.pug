@@ -1,0 +1,108 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    title Login Page
+    style.
+      .jumbotron {
+      background-color: darkseagreen !important;
+      text-align: center;
+      padding: 60px;
+      margin: 0px;
+      }
+      .form-group {
+      display: block;
+      margin: 20px;
+      }
+      .form-group label {
+      display: block;
+      padding: 6px;
+      font-weight: bold;
+      }
+      .form-group input{
+      padding: 6px;
+      width: 100%;
+      }
+      .login-container {
+      padding: 20px;
+      }
+      #loginForm {
+      margin: 40px;
+      }
+      .login-button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding-top: 10px;
+      padding-bottom: 10px;;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 97%;
+      margin: 20px;
+      }
+      .login-button:hover {
+      background-color: #0056b3;
+      }
+      .error-message {
+      color: rgb(109, 4, 4);
+      background-color: rgb(216, 127, 127);
+      padding: 20px;
+      margin-bottom: 10px;
+      text-align: left;
+      display: none;
+      border-radius: 4px;
+      }
+  body
+    .jumbotron
+      h1 Signup Page
+      p Please enter your email and password. Both are case sensitive.
+    .login-container
+      #errorMessage.error-message
+      .form-group
+        label(for='email') Email:
+        input#usernameInput(type='email', pattern='.+\@.+\..+', name='username', required='')
+        small#eventHelp.form-text.text-muted
+            | Must be of the form a@b.c
+      .form-group
+        label(for='password') Password:
+        input#passwordInput(type='password', name='password', required='')
+      .form-group
+        label(for='confirm-pass') Confirm Password:
+        input#confirmPasswordInput(type='password', name='password', required='')
+      button#loginButton.login-button(onclick='performSignUp()') Login
+    script.
+      function performSignUp() {
+      const username = document.getElementById('usernameInput').value;
+      const password = document.getElementById('passwordInput').value;
+      const confirm = document.getElementById('confirmPasswordInput').value;
+      console.log(username, password, confirm, confirm!=password);
+      if(confirm != password) {
+      document.getElementById('errorMessage').innerText = "Signup failed. Passwords Unequal."
+      document.getElementById('errorMessage').style.display = 'block';
+      }
+      else{
+      fetch('/createAccount', {
+      method: 'POST',
+      headers: {
+      'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+      })
+      .then(response => {
+      if (response.redirected) {
+      window.location.href = "/schedule";
+      console.log("Signup Successful");
+      } else {
+      console.log(response);
+      document.getElementById('errorMessage').innerText = "Signup failed. ";
+      document.getElementById('errorMessage').style.display = 'block';
+      throw new Error('Signup failed.');
+      }
+      })
+      .catch(error => {
+      console.error('Signup error:', error);
+      }); 
+      }      
+      };
